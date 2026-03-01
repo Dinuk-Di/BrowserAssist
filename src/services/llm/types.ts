@@ -5,7 +5,8 @@ export interface LLMProvider {
   generateStream(
     prompt: string,
     context: string,
-    onChunk: (chunk: string) => void
+    onChunk: (chunk: string) => void,
+    onProgress?: (progress: number, text: string) => void
   ): Promise<string>;
   
   /**

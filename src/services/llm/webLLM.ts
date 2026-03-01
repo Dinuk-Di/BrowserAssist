@@ -14,8 +14,8 @@ export class WebLLMProvider implements LLMProvider {
     });
   }
 
-  async generateStream(prompt: string, context: string, onChunk: (chunk: string) => void): Promise<string> {
-    await this.initEngine();
+  async generateStream(prompt: string, context: string, onChunk: (chunk: string) => void, onProgress?: (progress: number, text: string) => void): Promise<string> {
+    await this.initEngine(onProgress);
     
     const messages = [
       { role: 'system' as const, content: 'You are an AI assistant. Be direct.' },

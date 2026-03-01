@@ -1,7 +1,7 @@
 import { LLMProvider } from './types';
 
 export class ChromeAIProvider implements LLMProvider {
-  async generateStream(prompt: string, context: string, onChunk: (chunk: string) => void): Promise<string> {
+  async generateStream(prompt: string, context: string, onChunk: (chunk: string) => void, _onProgress?: (progress: number, text: string) => void): Promise<string> {
     const ai = (window as any).ai;
     if (!ai || !ai.languageModel) {
       throw new Error('Chrome Built-in AI is not available. Please check chrome://flags.');

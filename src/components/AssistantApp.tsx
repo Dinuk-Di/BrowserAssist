@@ -19,7 +19,7 @@ export const AssistantApp: React.FC<AssistantAppProps> = ({ onAccept, onCancel }
   const [isParsing, setIsParsing] = useState(false);
   const [showContext, setShowContext] = useState(false);
   
-  const { generate, output, isGenerating, error } = useLLM();
+  const { generate, output, isGenerating, error, downloadProgress, activeProviderName } = useLLM();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleGenerate = () => {
@@ -105,6 +105,32 @@ export const AssistantApp: React.FC<AssistantAppProps> = ({ onAccept, onCancel }
 
       {/* Main Body */}
       <div className="flex-1 overflow-y-auto flex flex-col bg-slate-50/50">
+      
+        {/* Provider Hints */}
+        {activeProviderName === 'chrome' && !output && !isGenerating && (
+          <div className="px-5 py-3 bg-blue-50/80 border-b border-blue-100/50 text-xs text-blue-700 flex items-start gap-2">
+            <Bot size={14} className="mt-0.5 shrink-0" />
+            <p>Using <b>Chrome Built-in AI</b>. Make sure <i>Prompt API</i> is enabled in <code className="bg-white/50 px-1 rounded">chrome://flags</code> if you see errors.</p>
+          </div>
+        )}
+        {activeProviderName === 'ollama' && !output && !isGenerating && (
+          <div className="px-5 py-3 bg-orange-50/80 border-b border-orange-100/50 text-xs text-orange-700 flex items-start gap-2">
+            <Bot size={14} className="mt-0.5 shrink-0" />
+            <p>Using <b>Local Ollama</b>. Ensure your server is running with <code className="bg-white/50 px-1 rounded font-mono">OLLAMA_ORIGINS="*" ollama serve</code> or you will get CORS errors.</p>
+          </div>
+        )}
+        {activeProviderName === 'webllm' && downloadProgress && (
+          <div className="px-5 py-4 bg-indigo-50/80 border-b border-indigo-100 flex flex-col gap-2">
+             <div className="flex justify-between items-center text-xs font-bold text-indigo-700">
+                <span>Downloading AI Model to VRAM...</span>
+                <span>{Math.round(downloadProgress.progress * 100)}%</span>
+             </div>
+             <div className="w-full bg-indigo-200 rounded-full h-1.5 overflow-hidden">
+                <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300" style={{ width: `${downloadProgress.progress * 100}%` }}></div>
+             </div>
+             <p className="text-[10px] text-indigo-500 font-mono truncate">{downloadProgress.text}</p>
+          </div>
+        )}
         
         {/* Context Accordion */}
         <div className="border-b border-gray-100 bg-white">

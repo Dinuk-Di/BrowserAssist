@@ -34,9 +34,34 @@ const Popup = () => {
           <option value="webllm">WebLLM (Phi-3) - Balanced</option>
           <option value="ollama">Local Ollama (Llama-3) - Powerful</option>
         </select>
-        <p className="mt-2 text-xs text-gray-500">
-          Note: If Chrome Built-in AI isn't working, make sure you enabled the Prompt API flag in chrome://flags. WebLLM will download the model to VRAM on first run. Ollama requires a local server.
-        </p>
+      </div>
+
+      <div className="text-sm bg-blue-50 border border-blue-100 rounded-xl p-3 text-blue-800">
+        <h3 className="font-bold mb-1 flex items-center gap-1"><span className="text-base">📌</span> Setup Guide</h3>
+        {provider === 'chrome' && (
+          <ul className="list-disc pl-4 space-y-1 text-xs">
+            <li>Requires Chrome Dev or Chrome Canary.</li>
+            <li>Go to <code className="bg-white px-1 py-0.5 rounded font-mono">chrome://flags</code></li>
+            <li>Enable <b>Prompt API for Gemini Nano</b></li>
+            <li>Set <b>Enables optimization guide on device</b> to <b>Enabled BypassPerfRequirement</b></li>
+            <li>Restart your browser. The browser will secretly download the tiny Gemini Nano model in the background.</li>
+          </ul>
+        )}
+        {provider === 'ollama' && (
+          <ul className="list-disc pl-4 space-y-1 text-xs">
+            <li>Requires <a href="https://ollama.com" target="_blank" className="underline font-bold">Ollama</a> installed locally.</li>
+            <li>Open a terminal / command prompt.</li>
+            <li>Run: <code className="bg-white px-1 py-0.5 rounded font-mono break-all font-bold">OLLAMA_ORIGINS="*" ollama serve</code></li>
+            <li>This runs the server and explicitly allows the extension to talk to it without getting blocked by CORS.</li>
+          </ul>
+        )}
+        {provider === 'webllm' && (
+          <ul className="list-disc pl-4 space-y-1 text-xs">
+             <li>Runs Microsoft's Phi-3 entirely offline inside your browser tab using WebGPU.</li>
+             <li><b>Warning:</b> First run takes ~2-5 minutes as it securely caches a 1.8GB model to your browser's IndexedDB.</li>
+             <li>Subsequent runs will be completely instant.</li>
+          </ul>
+        )}
       </div>
 
     </div>

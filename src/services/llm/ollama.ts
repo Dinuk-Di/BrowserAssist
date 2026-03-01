@@ -4,7 +4,7 @@ export class OllamaProvider implements LLMProvider {
   private endpoint = 'http://localhost:11434/api/generate';
   private model = 'llama3.2:3b';
 
-  async generateStream(prompt: string, context: string, onChunk: (chunk: string) => void): Promise<string> {
+  async generateStream(prompt: string, context: string, onChunk: (chunk: string) => void, _onProgress?: (progress: number, text: string) => void): Promise<string> {
     const combinedPrompt = `System: You are an AI assistant. Do not babble.
 Context:
 ${context}
