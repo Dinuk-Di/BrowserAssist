@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useLLM } from '../hooks/useLLM';
 import { Bot, Loader2, Send, FileText, UploadCloud, ChevronDown, ChevronUp } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
+import logoUrl from '../assets/logo.png';
 
 // To avoid CSP issues with CDNs in Chrome Extensions, we configure PDF.js to use the local worker
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
@@ -84,8 +85,8 @@ export const AssistantApp: React.FC<AssistantAppProps> = ({ onAccept, onCancel }
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-4 flex items-center justify-between text-white drop-shadow-sm">
         <div className="flex items-center gap-3 font-bold text-lg tracking-wide">
-          <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-md">
-            <Bot size={22} className="text-white" />
+          <div className="p-1.5 bg-white/20 rounded-xl backdrop-blur-md shadow-inner flex items-center justify-center">
+            <img src={logoUrl} alt="Logo" className="w-6 h-6 object-contain drop-shadow" />
           </div>
           <span>BrowserAssist AI</span>
         </div>

@@ -2,7 +2,14 @@ import { LLMProvider } from './types';
 
 export class OllamaProvider implements LLMProvider {
   private endpoint = 'http://localhost:11434/api/generate';
-  private model = 'llama3.2:3b';
+
+  private async getModel(): Promise<string> {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      const res = await chrome.storage.local.get(['ollama_model']);
+      if (res.ollama_model) return res.ollama_model;
+    }
+    return 'llama3.2:3b';
+  }
 
   async generateStream(prompt: string, context: string, onChunk: (chunk: string) => void, _onProgress?: (progress: number, text: string) => void): Promise<string> {
     const combinedPrompt = `System: You are an AI assistant. Do not babble.
@@ -17,7 +24,7 @@ ${prompt}
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: this.model,
+        model: await this.getModel(),
         prompt: combinedPrompt,
         stream: true
       })
@@ -65,7 +72,7 @@ ${prefix}
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: this.model,
+        model: await this.getModel(),
         prompt: combinedPrompt,
         stream: false
       })

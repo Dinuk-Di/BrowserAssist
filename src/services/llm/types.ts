@@ -16,4 +16,9 @@ export interface LLMProvider {
     prefix: string,
     context: string
   ): Promise<string>;
+
+  /**
+   * Preloads the model into memory/storage if necessary.
+   */
+  preload?(onProgress?: (progress: number, text: string) => void): Promise<void>;
 }

@@ -14,6 +14,10 @@ export class WebLLMProvider implements LLMProvider {
     });
   }
 
+  async preload(onProgress?: (progress: number, text: string) => void): Promise<void> {
+    await this.initEngine(onProgress);
+  }
+
   async generateStream(prompt: string, context: string, onChunk: (chunk: string) => void, onProgress?: (progress: number, text: string) => void): Promise<string> {
     await this.initEngine(onProgress);
     

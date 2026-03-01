@@ -1,28 +1,31 @@
-BrowserAssist: High-Performance AI Writing Agent
+<div align="center">
+  <img src="cover.png" alt="BrowserAssist Cover" width="100%" style="border-radius: 12px; margin-bottom: 20px;">
+  <h1>BrowserAssist: High-Performance AI Writing Agent</h1>
+</div>
 
 **BrowserAssist** is a local-first Chrome Extension that provides **near-instant** text completion and generation. It integrates deeply with your browser to read the active tab's context (emails, articles, documentation) and uses that to generate relevant text in milliseconds.
 
 ## 🚀 Key Features
 
-* **⚡ Zero-Latency Autocomplete:** Designed for "thought-speed" generation. Characters stream instantly into the text field.
-* **🧠 Deep Context Awareness:** Automatically reads and parses the active tab (Gmail thread, webpage content, or PDF viewer) to understand *what* you are writing about without you copying/pasting.
-* **🤖 Multi-Modal Backend:**
+- **⚡ Zero-Latency Autocomplete:** Designed for "thought-speed" generation. Characters stream instantly into the text field.
+- **🧠 Deep Context Awareness:** Automatically reads and parses the active tab (Gmail thread, webpage content, or PDF viewer) to understand _what_ you are writing about without you copying/pasting.
+- **🤖 Multi-Modal Backend:**
   1. **Chrome Built-in AI (Gemini Nano):** (Fastest) Uses the browser's native NPU-accelerated model. Zero network overhead.
   2. **WebLLM (WebGPU):** Runs optimized models (Phi-3, Llama-3-8B) directly in the VRAM of your browser tab.
-  3. **Local Ollama:** Connects to your local powerful rig (Llama-3, Mistral) for heavy-duty tasks.
-* **📄 Smart Reference:** Drag & drop PDFs (<4 pages) to ground the AI's response in specific documents.
-* **Universal Trigger:** Type `@browserassist` in any input field to summon the context-aware UI.
+  3. **Local Ollama:** Connects to your local Ollama instance and dynamically lists all your installed models. Pick any model you want instantly from the extension UI.
+- **📄 Smart Reference:** Drag & drop PDFs (<4 pages) to ground the AI's response in specific documents.
+- **Universal Trigger:** Type `@browserassist` in any input field to summon the context-aware UI.
 
 ---
 
 ## 🛠️ Technology Stack & Performance
 
-* **Frontend:** React 18, TypeScript, Vite, TailwindCSS
-* **Extension Core:** CRXJS (Hot Reloading), Shadow DOM (Style Isolation)
-* **Performance Engine:**
-  * **Streaming:** custom `ReadableStream` implementation for Token-by-Token rendering.
-  * **Context Extraction:** `@mozilla/readability` (lightweight DOM parsing).
-  * **Inference:** `window.ai` (Chrome), `@mlc-ai/web-llm` (WebGPU).
+- **Frontend:** React 18, TypeScript, Vite, TailwindCSS
+- **Extension Core:** CRXJS (Hot Reloading), Shadow DOM (Style Isolation)
+- **Performance Engine:**
+  - **Streaming:** custom `ReadableStream` implementation for Token-by-Token rendering.
+  - **Context Extraction:** `@mozilla/readability` (lightweight DOM parsing).
+  - **Inference:** `window.ai` (Chrome), `@mlc-ai/web-llm` (WebGPU).
 
 ---
 
@@ -34,16 +37,16 @@ To achieve near-instant inference, we bypass standard API waiting times.
 
 Before the user even finishes typing the prompt, the extension captures the page state.
 
-* **Gmail:** Targets specific DOM nodes (`.a3s.aiL`) to get the exact email thread history.
-* **General Web:** Uses a lightweight Readability parser to strip ads/nav bars and get the pure text content of the article/page.
-* **Optimization:** Context is token-limited (sliding window) to ensure the LLM doesn't choke on processing time.
+- **Gmail:** Targets specific DOM nodes (`.a3s.aiL`) to get the exact email thread history.
+- **General Web:** Uses a lightweight Readability parser to strip ads/nav bars and get the pure text content of the article/page.
+- **Optimization:** Context is token-limited (sliding window) to ensure the LLM doesn't choke on processing time.
 
 ### 2. The Streaming Bridge
 
 We do not wait for the full response.
 
-* **Ollama/WebLLM:** We attach a listener to the output stream.
-* **Shadow DOM:** The React UI updates typically at 60fps, rendering tokens the moment they are predicted.
+- **Ollama/WebLLM:** We attach a listener to the output stream.
+- **Shadow DOM:** The React UI updates typically at 60fps, rendering tokens the moment they are predicted.
 
 ---
 
@@ -51,9 +54,9 @@ We do not wait for the full response.
 
 ### 1. Prerequisites
 
-* **Node.js** (v18+)
-* **GPU Recommended** (for WebLLM)
-* **Chrome Canary/Dev** (Required for "Chrome Built-in AI" mode)
+- **Node.js** (v18+)
+- **GPU Recommended** (for WebLLM)
+- **Chrome Canary/Dev** (Required for "Chrome Built-in AI" mode)
 
 ### 2. Quick Start
 
@@ -74,7 +77,7 @@ npm run dev
 ### 3. Load into Chrome
 
 1. Navigate to `chrome://extensions`.
-2. Enable  **Developer Mode** .
+2. Enable **Developer Mode** .
 3. Click **Load Unpacked** -> Select the `dist` folder.
 
 ---
@@ -83,24 +86,24 @@ npm run dev
 
 For the absolute fastest response times, follow this configuration guide:
 
-### Option A: Chrome Built-in AI (Gemini Nano) - *Fastest*
+### Option A: Chrome Built-in AI (Gemini Nano) - _Fastest_
 
-* **Why:** Uses the device's NPU (Neural Processing Unit) if available. No download lag, no VRAM overhead.
-* **Setup:**
+- **Why:** Uses the device's NPU (Neural Processing Unit) if available. No download lag, no VRAM overhead.
+- **Setup:**
   1. Open Chrome Flags (`chrome://flags`).
-  2. Set `Enables optimization guide on device` to  **Enabled BypassPerfRequirement** .
-  3. Set `Prompt API for Gemini Nano` to  **Enabled** .
+  2. Set `Enables optimization guide on device` to **Enabled BypassPerfRequirement** .
+  3. Set `Prompt API for Gemini Nano` to **Enabled** .
   4. Restart Chrome.
 
-### Option B: WebLLM (Phi-3 Mini) - *Balanced*
+### Option B: WebLLM (Phi-3 Mini) - _Balanced_
 
-* **Why:** Microsoft's Phi-3 is tiny (3.8B) but incredibly smart. It loads into WebGPU VRAM quickly.
-* **Setup:** Select **"Phi-3-mini-4k-instruct-q4f16_1"** from the extension dropdown. The first run will take 30s to cache; subsequent runs are instant.
+- **Why:** Microsoft's Phi-3 is tiny (3.8B) but incredibly smart. It loads into WebGPU VRAM quickly.
+- **Setup:** Select **"Phi-3-mini-4k-instruct-q4f16_1"** from the extension dropdown. The first run will take 30s to cache; subsequent runs are instant.
 
-### Option C: Local Ollama - *Most Powerful*
+### Option C: Local Ollama - _Most Powerful & Flexible_
 
-* **Why:** If you have a dedicated RTX 3060+, running Llama-3 locally is faster than cloud APIs.
-* **Setup:**
+- **Why:** Connects to your local Ollama desktop app. The extension automatically fetches your entire library of installed models and lets you hot-swap them right from the popup dropdown. Any model, zero restrictions.
+- **Setup:**
   **Bash**
 
   ```
@@ -130,9 +133,9 @@ export const getPageContext = (): string => {
 
   // 2. Generic Page: Use Readability to extract main article text
   // We clone the document to avoid messing with the live DOM
-  const documentClone = document.cloneNode(true); 
+  const documentClone = document.cloneNode(true);
   const article = new Readability(documentClone as Document).parse();
-  
+
   return article ? article.textContent : document.body.innerText.substring(0, 3000);
 };
 ```

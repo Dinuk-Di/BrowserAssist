@@ -27,8 +27,14 @@
       "matches": ["<all_urls>"]
     }
   ],
+  "icons": {
+    "16": "src/assets/logo.png",
+    "48": "src/assets/logo.png",
+    "128": "src/assets/logo.png"
+  },
   "action": {
     "default_popup": "index.html",
+    "default_icon": "src/assets/logo.png",
     "default_title": "BrowserAssist Options"
   }
 }
