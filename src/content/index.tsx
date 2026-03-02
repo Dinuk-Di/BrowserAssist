@@ -56,12 +56,12 @@ const unmountReactApp = () => {
 const insertText = (text: string) => {
   if (currentActiveElement) {
     if (currentActiveElement instanceof HTMLTextAreaElement || currentActiveElement instanceof HTMLInputElement) {
-      // Replace @browserassist if it exists
+      // Replace @browserassist or /browserassist if it exists
       const val = currentActiveElement.value;
-      currentActiveElement.value = val.replace(/@browserassist/i, '') + text;
+      currentActiveElement.value = val.replace(/[@/]browserassist/i, '') + text;
       currentActiveElement.dispatchEvent(new Event('input', { bubbles: true }));
     } else if (currentActiveElement.isContentEditable) {
-      currentActiveElement.innerHTML = currentActiveElement.innerHTML.replace(/@browserassist/i, '') + text;
+      currentActiveElement.innerHTML = currentActiveElement.innerHTML.replace(/[@/]browserassist/i, '') + text;
       currentActiveElement.dispatchEvent(new Event('input', { bubbles: true }));
     }
   }
@@ -160,7 +160,7 @@ document.addEventListener('input', (e) => {
   }
 
   // Explicit Trigger
-  if (text.includes('@browserassist')) {
+  if (/[@/]browserassist/i.test(text)) {
     currentActiveElement = target;
     mountReactApp();
   } else {

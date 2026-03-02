@@ -1,8 +1,6 @@
 import { LLMProvider } from './types';
 
 export class OllamaProvider implements LLMProvider {
-  private endpoint = 'http://localhost:11434/api/generate';
-
   private async getModel(): Promise<string> {
     if (typeof chrome !== 'undefined' && chrome.storage) {
       const res = await chrome.storage.local.get(['ollama_model']);
@@ -20,43 +18,40 @@ Task:
 ${prompt}
 `;
 
-    const response = await fetch(this.endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: await this.getModel(),
-        prompt: combinedPrompt,
-        stream: true
-      })
-    });
-
-    if (!response.body) throw new Error('No body in response');
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let completeResponse = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    // Send a message to the background script to start the stream.
+    // The background script will use a port to send back chunks.
+    return new Promise(async (resolve, reject) => {
+      const model = await this.getModel();
       
-      const chunkStr = decoder.decode(value, { stream: true });
-      const lines = chunkStr.split('\n').filter(line => line.trim() !== '');
+      const port = chrome.runtime.connect({ name: 'ollama-stream' });
       
-      for (const line of lines) {
-        try {
-          const parsed = JSON.parse(line);
-          if (parsed.response) {
-            completeResponse += parsed.response;
-            onChunk(parsed.response);
-          }
-        } catch (e) {
-          console.error("Failed to parse chunk:", line);
+      port.postMessage({
+        action: 'generateStream',
+        model,
+        prompt: combinedPrompt
+      });
+
+      let completeResponse = '';
+
+      port.onMessage.addListener((msg) => {
+        if (msg.error) {
+          port.disconnect();
+          reject(new Error(msg.error));
+        } else if (msg.done) {
+          port.disconnect();
+          resolve(completeResponse);
+        } else if (msg.chunk) {
+          completeResponse += msg.chunk;
+          onChunk(msg.chunk);
         }
-      }
-    }
+      });
 
-    return completeResponse;
+      port.onDisconnect.addListener(() => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        }
+      });
+    });
   }
 
   async generateCompletion(prefix: string, context: string): Promise<string> {
@@ -68,17 +63,28 @@ Prefix:
 ${prefix}
 `;
 
-    const response = await fetch(this.endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: await this.getModel(),
-        prompt: combinedPrompt,
-        stream: false
-      })
+    return new Promise(async (resolve, reject) => {
+      const model = await this.getModel();
+      chrome.runtime.sendMessage(
+        {
+          action: 'generateCompletion',
+          model,
+          prompt: combinedPrompt
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+             return reject(chrome.runtime.lastError.message);
+          }
+          if (response && response.error) {
+            return reject(new Error(response.error));
+          }
+          if (response && response.result) {
+            resolve(response.result.trim());
+          } else {
+            reject(new Error("Unexpected response from background"));
+          }
+        }
+      );
     });
-
-    const data = await response.json();
-    return data.response.trim();
   }
 }

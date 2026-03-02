@@ -108,7 +108,9 @@ For the absolute fastest response times, follow this configuration guide:
 
   ```
   # Allow Chrome to talk to Ollama
-  OLLAMA_ORIGINS="chrome-extension://*" ollama serve
+  $env:OLLAMA_ORIGINS="*"; ollama serve
+
+
   ```
 
 ---

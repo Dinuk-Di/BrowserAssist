@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="BrowserAssist - The ultimate native local AI co-pilot for your browser. Enhance your web experience with inline autocompletion, context extraction, and more without compromising privacy."
+    />
+    <title>BrowserAssist | Universal Local AI Co-Pilot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+              display: ["Outfit", "sans-serif"],
+            },
+            colors: {
+              background: "#030712", // gray-950
+              surface: "#111827", // gray-900
+              brand: {
+                400: "#38bdf8",
+                500: "#0ea5e9",
+                600: "#0284c7",
+                primary: "#8b5cf6", // violet-500
+                secondary: "#06b6d4", // cyan-500
+              },
+            },
+            animation: {
+              blob: "blob 7s infinite",
+              float: "float 6s ease-in-out infinite",
+              "ping-slow": "ping 3s cubic-bezier(0, 0, 0.2, 1) infinite",
+            },
+            keyframes: {
+              blob: {
+                "0%": { transform: "translate(0px, 0px) scale(1)" },
+                "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+                "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+                "100%": { transform: "translate(0px, 0px) scale(1)" },
+              },
+              float: {
+                "0%, 100%": { transform: "translateY(0)" },
+                "50%": { transform: "translateY(-20px)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800;900&display=swap");
+
+      body {
+        background-color: #030712;
+        color: #f8fafc;
+        overflow-x: hidden;
+      }
+
+      /* Fluid glassmorphism utilities */
+      .glass-panel {
+        background: rgba(17, 24, 39, 0.6);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .text-gradient {
+        background: linear-gradient(to right, #8b5cf6, #06b6d4, #38bdf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .hero-glow {
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(
+          circle,
+          rgba(139, 92, 246, 0.15) 0%,
+          rgba(6, 182, 212, 0.1) 40%,
+          rgba(3, 7, 18, 0) 70%
+        );
+        top: -20%;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: -1;
+        pointer-events: none;
+      }
+
+      .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        border-color: rgba(139, 92, 246, 0.4);
+      }
+
+      .animated-border {
+        position: relative;
+        background:
+          linear-gradient(rgba(3, 7, 18, 1), rgba(3, 7, 18, 1)) padding-box,
+          linear-gradient(
+              45deg,
+              rgba(255, 255, 255, 0.1),
+              rgba(139, 92, 246, 0.5),
+              rgba(6, 182, 212, 0.5),
+              rgba(255, 255, 255, 0.1)
+            )
+            border-box;
+        border: 1px solid transparent;
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #030712;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1f2937;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #374151;
+      }
+    </style>
+  </head>
+  <body class="antialiased selection:bg-brand-primary selection:text-white">
+    <!-- Decorative background blobs -->
+    <div
+      class="absolute top-0 left-0 w-full h-screen overflow-hidden -z-20 pointer-events-none"
+    >
+      <div
+        class="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-primary/20 rounded-full mix-blend-screen filter blur-[128px] animate-blob"
+      ></div>
+      <div
+        class="absolute top-1/3 right-1/4 w-96 h-96 bg-brand-secondary/20 rounded-full mix-blend-screen filter blur-[128px] animate-blob animation-delay-2000"
+      ></div>
+      <div
+        class="absolute bottom-1/4 left-1/3 w-96 h-96 bg-brand-500/20 rounded-full mix-blend-screen filter blur-[128px] animate-blob animation-delay-4000"
+      ></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 w-full z-50 glass-panel border-b-0 border-white/5 bg-background/50 backdrop-blur-xl transition-all duration-300"
+    >
+      <div
+        class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-4 cursor-pointer">
+          <div class="relative group">
+            <div
+              class="absolute -inset-1 bg-gradient-to-r from-brand-primary to-brand-secondary rounded-xl blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"
+            ></div>
+            <img
+              src="logo.png"
+              alt="BrowserAssist Logo"
+              class="relative h-10 w-10 object-contain rounded-xl bg-white/5 border border-white/10 p-1"
+            />
+          </div>
+          <span class="text-xl font-display font-bold tracking-tight text-white"
+            >Browser<span
+              class="text-gradient hover:opacity-80 transition-opacity"
+              >Assist</span
+            ></span
+          >
+        </div>
+
+        <div
+          class="hidden md:flex items-center gap-8 font-medium text-sm text-gray-300"
+        >
+          <a
+            href="#features"
+            class="hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all"
+            >Features</a
+          >
+          <a
+            href="#showcase"
+            class="hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all"
+            >Showcase</a
+          >
+          <a
+            href="#engines"
+            class="hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all"
+            >Local Engines</a
+          >
+        </div>
+
+        <a
+          href="#"
+          class="relative group inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-white transition-all bg-white/10 border border-white/20 rounded-full hover:bg-white/20 hover:border-white/40 overflow-hidden"
+        >
+          <span
+            class="absolute w-0 h-0 transition-all duration-300 ease-out bg-white rounded-full group-hover:w-56 group-hover:h-56 opacity-10"
+          ></span>
+          <span class="relative flex items-center gap-2">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              ></path>
+            </svg>
+            Add to Chrome
+          </span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header
+      class="relative pt-40 pb-20 lg:pt-52 lg:pb-32 px-6 flex flex-col items-center justify-center text-center"
+    >
+      <div class="hero-glow"></div>
+
+      <div
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel text-sm font-medium mb-8 text-brand-400 border border-brand-primary/30 shadow-[0_0_20px_rgba(139,92,246,0.1)] backdrop-blur-md"
+      >
+        <span class="relative flex h-2 w-2">
+          <span
+            class="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"
+          ></span>
+          <span
+            class="relative inline-flex rounded-full h-2 w-2 bg-brand-400"
+          ></span>
+        </span>
+        <span class="text-gray-200">New: Supercharged with Ollama Support</span>
+      </div>
+
+      <h1
+        class="text-5xl md:text-7xl lg:text-8xl font-display font-extrabold tracking-tight mb-8 leading-[1.05] max-w-5xl mx-auto drop-shadow-2xl"
+      >
+        Your Local AI Co-Pilot <br />
+        <span class="text-gradient">Everywhere You Type.</span>
+      </h1>
+
+      <p
+        class="text-lg md:text-xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed"
+      >
+        Unleash the power of local LLMs directly inside any text box on the web.
+        Zero cloud dependency. Maximum privacy. Infinite context.
+      </p>
+
+      <div
+        class="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto z-10"
+      >
+        <a
+          href="#"
+          class="w-full sm:w-auto px-8 py-4 bg-white text-background rounded-full font-bold text-lg transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"
+            />
+          </svg>
+          Install Extension Free
+        </a>
+        <a
+          href="#features"
+          class="w-full sm:w-auto px-8 py-4 glass-panel text-white border border-white/10 rounded-full font-medium text-lg transition-all hover:bg-white/5 hover:border-white/20"
+        >
+          See How It Works
+        </a>
+      </div>
+
+      <!-- Floating Dashboard UI / Cover -->
+      <div
+        class="mt-24 max-w-6xl mx-auto relative perspective-1000 animate-float w-full"
+      >
+        <div
+          class="absolute -inset-1 bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-primary rounded-3xl blur-2xl opacity-20"
+        ></div>
+        <div
+          class="relative animated-border rounded-3xl overflow-hidden glass-panel p-2 shadow-2xl"
+        >
+          <!-- Floating elements on cover -->
+          <div
+            class="absolute -left-6 bottom-12 w-48 p-4 glass-panel rounded-2xl hidden md:block shadow-[0_0_30px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-2xl"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-3 h-3 rounded-full bg-green-400 shadow-[0_0_10px_#4ade80]"
+              ></div>
+              <p class="text-xs font-semibold text-gray-200">
+                Local inference active
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Core Features Cards -->
+    <section id="features" class="py-24 relative overflow-hidden">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-20">
+          <h2 class="text-3xl md:text-5xl font-display font-bold mb-6">
+            A complete AI toolkit.
+            <span class="text-gradient">Injected everywhere.</span>
+          </h2>
+          <p class="text-gray-400 max-w-2xl mx-auto text-lg">
+            BrowserAssist actively reads your tab's context, understands the
+            form you are focusing on, and writes directly into your inputs.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- Card 1 -->
+          <div
+            class="glass-panel p-8 rounded-3xl card-hover transition-all duration-300 relative group overflow-hidden border border-white/10"
+          >
+            <div
+              class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-blue-500/20"
+            ></div>
+            <div
+              class="w-14 h-14 bg-gradient-to-br from-blue-500/20 to-blue-600/5 border border-blue-500/20 rounded-2xl flex items-center justify-center mb-6 shadow-inner"
+            >
+              <svg
+                class="w-7 h-7 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                ></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-display font-semibold mb-3 text-white">
+              Inline Autocompletion
+            </h3>
+            <p
+              class="text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors"
+            >
+              Stop typing boilerplate. Start typing any email, tweet, or form,
+              and BrowserAssist predicts the next sentence based on the page
+              context. Hit
+              <kbd
+                class="px-2 py-1 bg-white/10 rounded-md text-xs font-mono border border-white/20 mx-1"
+                >Tab</kbd
+              >
+              to accept.
+            </p>
+          </div>
+
+          <!-- Card 2 -->
+          <div
+            class="glass-panel p-8 rounded-3xl card-hover transition-all duration-300 relative group overflow-hidden border border-white/10"
+          >
+            <div
+              class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-purple-500/20"
+            ></div>
+            <div
+              class="w-14 h-14 bg-gradient-to-br from-purple-500/20 to-purple-600/5 border border-purple-500/20 rounded-2xl flex items-center justify-center mb-6 shadow-inner"
+            >
+              <svg
+                class="w-7 h-7 text-purple-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                ></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-display font-semibold mb-3 text-white">
+              Deep Context Extraction
+            </h3>
+            <p
+              class="text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors"
+            >
+              Whether you're on a chaotic job posting or deep in a Gmail thread,
+              the extension seamlessly intelligently extracts the readable
+              context out of the DOM to inform the AI.
+            </p>
+          </div>
+
+          <!-- Card 3 -->
+          <div
+            class="glass-panel p-8 rounded-3xl card-hover transition-all duration-300 relative group overflow-hidden border border-white/10"
+          >
+            <div
+              class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-emerald-500/20"
+            ></div>
+            <div
+              class="w-14 h-14 bg-gradient-to-br from-emerald-500/20 to-emerald-600/5 border border-emerald-500/20 rounded-2xl flex items-center justify-center mb-6 shadow-inner"
+            >
+              <svg
+                class="w-7 h-7 text-emerald-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                ></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-display font-semibold mb-3 text-white">
+              Smart PDF Ingestion
+            </h3>
+            <p
+              class="text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors"
+            >
+              Need the AI to reference your resume or a dense whitepaper? Just
+              drag and drop any PDF directly into the floating extension window
+              to append it to the context.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visual Showcase -->
+    <section
+      id="showcase"
+      class="py-24 border-y border-white/5 bg-background relative overflow-hidden"
+    >
+      <div
+        class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wNSkiLz48L3N2Zz4=')] opacity-20"
+      ></div>
+      <div class="max-w-7xl mx-auto px-6 relative z-10 space-y-32">
+        <!-- Showcase 1 -->
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="space-y-6">
+            <div
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 text-brand-400 text-xs font-bold uppercase tracking-wider border border-brand-primary/20"
+            >
+              Seamless Integration
+            </div>
+            <h3 class="text-4xl lg:text-5xl font-display font-bold">
+              Write better, faster.
+            </h3>
+            <p class="text-lg text-gray-400 leading-relaxed">
+              Experience a fluid and unobtrusive writing assistant that appears
+              right when you need it. Let the AI complete your thoughts, rewrite
+              paragraphs, or draft entire emails based on the current page
+              content.
+            </p>
+            <ul class="space-y-3 mt-6">
+              <li class="flex items-center gap-3 text-gray-300">
+                <svg
+                  class="w-5 h-5 text-brand-secondary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                Understands context
+              </li>
+              <li class="flex items-center gap-3 text-gray-300">
+                <svg
+                  class="w-5 h-5 text-brand-secondary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                Matches your tone
+              </li>
+              <li class="flex items-center gap-3 text-gray-300">
+                <svg
+                  class="w-5 h-5 text-brand-secondary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                Operates locally
+              </li>
+            </ul>
+          </div>
+          <div class="relative group">
+            <div
+              class="absolute -inset-2 bg-gradient-to-tr from-brand-primary to-blue-500 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition duration-500"
+            ></div>
+            <img
+              src="1-01.png"
+              alt="Feature showcase 1"
+              class="relative rounded-2xl border border-white/10 shadow-2xl bg-surface"
+              onerror="this.src = 'cover.png'"
+            />
+          </div>
+        </div>
+
+        <!-- Showcase 2 -->
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="order-2 lg:order-1 relative group">
+            <div
+              class="absolute -inset-2 bg-gradient-to-tr from-emerald-500 to-brand-secondary rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition duration-500"
+            ></div>
+            <img
+              src="2-01.png"
+              alt="Feature showcase 2"
+              class="relative rounded-2xl border border-white/10 shadow-2xl bg-surface"
+              onerror="this.src = 'cover.png'"
+            />
+          </div>
+          <div class="order-1 lg:order-2 space-y-6 lg:pl-10">
+            <div
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider border border-emerald-500/20"
+            >
+              Chat Interface
+            </div>
+            <h3 class="text-4xl lg:text-5xl font-display font-bold">
+              Ask anything about the page.
+            </h3>
+            <p class="text-lg text-gray-400 leading-relaxed">
+              Invoke the powerful sidebar chat to summarize long articles,
+              extract key data points, or translate text. The assistant always
+              knows exactly what you are looking at.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Engines Section -->
+    <section id="engines" class="py-32 relative">
+      <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand-primary/10 rounded-full blur-[100px] -z-10"
+      ></div>
+
+      <div class="max-w-7xl mx-auto px-6 text-center mb-16">
+        <h2 class="text-4xl md:text-5xl font-display font-bold mb-6">
+          Choose your brain.
+        </h2>
+        <p class="text-lg text-gray-400 max-w-2xl mx-auto">
+          BrowserAssist roots all requests locally. You maintain full control
+          over the weights and biases powering your writing. No cloud data
+          harvesting. Ever.
+        </p>
+      </div>
+
+      <div class="max-w-5xl mx-auto grid md:grid-cols-3 gap-6 px-6">
+        <!-- Gemini Nano -->
+        <div
+          class="glass-panel p-8 rounded-3xl border border-white/10 flex flex-col items-center text-center hover:border-brand-400/50 transition-colors"
+        >
+          <div
+            class="w-16 h-16 bg-white rounded-full flex items-center justify-center p-3 mb-6 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+          >
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg"
+              class="w-full h-full object-contain"
+            />
+          </div>
+          <h4 class="text-xl font-display font-bold text-white mb-2">
+            Chrome Built-In AI
+          </h4>
+          <div
+            class="mb-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20"
+          >
+            Gemini Nano
+          </div>
+          <p class="text-sm text-gray-400 leading-relaxed">
+            Zero-install local inference using Chrome's built-in
+            <code class="text-gray-300 bg-white/5 px-1 rounded">window.ai</code>
+            standard. Instant and lightweight.
+          </p>
+        </div>
+
+        <!-- Ollama -->
+        <div
+          class="glass-panel p-8 rounded-3xl border border-white/10 flex flex-col items-center text-center relative overflow-hidden transform md:-translate-y-4 hover:border-brand-primary/50 transition-colors shadow-[0_0_40px_rgba(139,92,246,0.1)]"
+        >
+          <div
+            class="absolute inset-0 bg-gradient-to-b from-brand-primary/10 to-transparent pointer-events-none"
+          ></div>
+          <div
+            class="w-20 h-20 rounded-full flex items-center justify-center p-2 mb-6 shadow-[0_0_30px_rgba(255,255,255,0.2)] bg-white/5 backdrop-blur-md border border-white/10 z-10"
+          >
+            <img
+              src="ollama.png"
+              alt="Ollama Logo"
+              class="w-full h-full object-contain drop-shadow-md"
+            />
+          </div>
+          <h4 class="text-2xl font-display font-bold text-white mb-2 z-10">
+            Ollama Support
+          </h4>
+          <div class="mb-4 z-10 flex flex-wrap justify-center gap-2">
+            <span
+              class="inline-flex items-center px-2.5 py-1 rounded-md bg-white/10 text-gray-200 text-xs font-medium border border-white/20"
+              >Llama 3</span
+            >
+            <span
+              class="inline-flex items-center px-2.5 py-1 rounded-md bg-white/10 text-gray-200 text-xs font-medium border border-white/20"
+              >Mistral</span
+            >
+            <span
+              class="inline-flex items-center px-2.5 py-1 rounded-md bg-white/10 text-gray-200 text-xs font-medium border border-white/20"
+              >Any Model</span
+            >
+          </div>
+          <p class="text-sm text-gray-400 leading-relaxed z-10">
+            Automatically fetches your entire library of installed local models
+            and lets you hot-swap them natively within the browser UI. The
+            ultimate power user experience.
+          </p>
+        </div>
+
+        <!-- WebGPU -->
+        <div
+          class="glass-panel p-8 rounded-3xl border border-white/10 flex flex-col items-center text-center hover:border-brand-secondary/50 transition-colors"
+        >
+          <div
+            class="w-16 h-16 bg-gradient-to-br from-gray-800 to-gray-900 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(0,0,0,0.5)] border border-gray-700"
+          >
+            <span class="text-white font-display font-bold text-xl">W</span>
+          </div>
+          <h4 class="text-xl font-display font-bold text-white mb-2">
+            WebLLM / WebGPU
+          </h4>
+          <div
+            class="mb-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-400 text-xs font-medium border border-cyan-500/20"
+          >
+            Phi-3
+          </div>
+          <p class="text-sm text-gray-400 leading-relaxed">
+            Downloads a quantized model straight into your browser's IndexedDB
+            cache. Runs entirely via your GPU in the browser.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <section class="py-24 relative">
+      <div class="max-w-4xl mx-auto px-6 relative z-10">
+        <div
+          class="glass-panel rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden border border-white/10 shadow-2xl shadow-brand-primary/20 bg-surface/50"
+        >
+          <div
+            class="absolute inset-0 bg-gradient-to-r from-brand-primary/20 to-brand-secondary/20 blur-3xl mix-blend-screen pointer-events-none"
+          ></div>
+
+          <h2
+            class="text-4xl md:text-5xl font-display font-bold mb-6 text-white relative z-10"
+          >
+            Ready to type faster?
+          </h2>
+          <p
+            class="text-xl text-gray-400 mb-10 max-w-2xl mx-auto relative z-10"
+          >
+            Stop switching tabs to use ChatGPT. Generate text, analyze content,
+            and stay in context right where you need it.
+          </p>
+
+          <a
+            href="#"
+            class="inline-flex items-center gap-3 px-10 py-5 bg-white text-background rounded-full font-bold text-lg transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)] relative z-10"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              ></path>
+            </svg>
+            Add to Chrome - It's Free
+          </a>
+          <p class="text-xs text-gray-500 mt-6 relative z-10">
+            No credit card required. 100% Free & Open Source.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+      class="py-12 border-t border-white/5 bg-[#01030a] text-center text-gray-500 text-sm"
+    >
+      <div
+        class="flex items-center justify-center gap-2 mb-6 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer"
+      >
+        <img src="logo.png" alt="Logo" class="w-6 h-6 rounded-md" />
+        <span class="font-display font-bold text-white text-lg"
+          >BrowserAssist</span
+        >
+      </div>
+      <p>
+        © 2026 BrowserAssist. All rights reserved. Open-source under MIT
+        License.
+      </p>
+      <div class="flex justify-center gap-6 mt-6">
+        <a href="#" class="hover:text-white transition-colors">Twitter</a>
+        <a href="#" class="hover:text-white transition-colors">GitHub</a>
+        <a href="#" class="hover:text-white transition-colors">Discord</a>
+      </div>
+    </footer>
+  </body>
+</html>
