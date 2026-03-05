@@ -10,10 +10,11 @@ const Popup = () => {
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>('llama3.2:3b');
   const [ollamaEndpoint, setOllamaEndpoint] = useState<string>('http://localhost:11434');
+  const [ollamaContextLength, setOllamaContextLength] = useState<number>(4096);
   const { downloadProgress, preloadEngine } = useLLM();
 
   useEffect(() => {
-    chrome.storage.local.get(['llm_provider', 'ollama_model', 'ollama_endpoint'], (res) => {
+    chrome.storage.local.get(['llm_provider', 'ollama_model', 'ollama_endpoint', 'ollama_context_length'], (res) => {
       let currentProvider: ProviderType = 'webllm';
       
       if (res.llm_provider && res.llm_provider !== 'chrome') {
@@ -29,6 +30,11 @@ const Popup = () => {
       }
       if (res.ollama_endpoint) {
         setOllamaEndpoint(res.ollama_endpoint);
+      }
+      if (res.ollama_context_length) {
+        setOllamaContextLength(res.ollama_context_length);
+      } else {
+        chrome.storage.local.set({ ollama_context_length: 4096 });
       }
     });
   }, []);
@@ -131,10 +137,29 @@ const Popup = () => {
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
-          ) : (
-            <div className="text-sm text-red-600 p-2 bg-red-50 rounded border border-red-100">Could not connect to Ollama. Is it running? Make sure to run it with OLLAMA_ORIGINS="*" and your endpoint is correct.</div>
-          )}
-        </div>
+            ) : (
+              <div className="text-sm text-red-600 p-2 bg-red-50 rounded border border-red-100">Could not connect to Ollama. Is it running? Make sure to run it with OLLAMA_ORIGINS="*" and your endpoint is correct.</div>
+            )}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-semibold mb-1">Context Window Length
+              <span className="ml-2 font-normal text-xs text-gray-500">Tokens</span>
+            </label>
+            <input 
+              type="number"
+              min="1024"
+              max="131072"
+              step="1024"
+              value={ollamaContextLength}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10) || 4096;
+                setOllamaContextLength(val);
+                chrome.storage.local.set({ ollama_context_length: val });
+              }}
+              className="w-full border rounded-lg p-2 bg-gray-50 outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <p className="text-xs text-slate-500 mt-1">Leave at 4096 for typical ~8GB VRAM usage. Raise for longer PDFs/webpages if you have ample VRAM.</p>
+          </div>
         </>
       )}
 

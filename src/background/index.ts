@@ -51,7 +51,10 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
       body: JSON.stringify({
         model: request.model,
         prompt: request.prompt,
-        stream: false
+        stream: false,
+        options: {
+          num_ctx: request.contextLength || 4096
+        }
       })
     })
       .then(async res => {
@@ -90,7 +93,10 @@ chrome.runtime.onConnect.addListener((port) => {
             body: JSON.stringify({
               model: msg.model,
               prompt: msg.prompt,
-              stream: true
+              stream: true,
+              options: {
+                num_ctx: msg.contextLength || 4096
+              }
             })
           });
 

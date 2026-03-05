@@ -1,171 +1,67 @@
-<div align="center">
-  <img src="cover.png" alt="BrowserAssist Cover" width="100%" style="border-radius: 12px; margin-bottom: 20px;">
-  <h1>BrowserAssist: High-Performance AI Writing Agent</h1>
-</div>
+# ⚡ Aegis Core / BrowserAssist
 
-**BrowserAssist** is a local-first Chrome Extension that provides **near-instant** text completion and generation. It integrates deeply with your browser to read the active tab's context (emails, articles, documentation) and uses that to generate relevant text in milliseconds.
+BrowserAssist (Aegis Core) is a powerful, privacy-first AI extension that brings a local Large Language Model (LLM) directly into your browser. Experience near-instant text completion, intelligent drafting, and context-aware suggestions seamlessly integrated into your workflow.
 
-## 🚀 Key Features
+## 🌟 Key Features
 
-- **⚡ Zero-Latency Autocomplete:** Designed for "thought-speed" generation. Characters stream instantly into the text field.
-- **🧠 Deep Context Awareness:** Automatically reads and parses the active tab (Gmail thread, webpage content, or PDF viewer) to understand _what_ you are writing about without you copying/pasting.
-- **🤖 Multi-Modal Backend:**
-  1. **Chrome Built-in AI (Gemini Nano):** (Fastest) Uses the browser's native NPU-accelerated model. Zero network overhead.
-  2. **WebLLM (WebGPU):** Runs optimized models (Phi-3, Llama-3-8B) directly in the VRAM of your browser tab.
-  3. **Local Ollama:** Connects to your local Ollama instance and dynamically lists all your installed models. Pick any model you want instantly from the extension UI.
-- **📄 Smart Reference:** Drag & drop PDFs (<4 pages) to ground the AI's response in specific documents.
-- **Universal Trigger:** Type `@browserassist` in any input field to summon the context-aware UI.
+- **Offline, In-Browser AI (WebLLM):** Runs entirely within your browser using WebGPU acceleration for completely offline, private inference via the Phi-3 model.
+- **Local Desktop AI Integration (Ollama):** Connects gracefully to your desktop's Ollama installation to harness powerful local models (e.g. Llama 3, Mistral) without relying on cloud APIs.
+- **Context-Aware Assistance:** Dynamically understands the context of the webpage you are reading, including specialized support for extracting secure email threads from **Gmail**, making it perfect for drafting intelligent email replies.
+- **Inline Ghost Suggestions:** Just start typing. The extension analyzes your context and offers intelligent text completions that you can accept instantly with the `Tab` key.
+- **Dedicated Assistant UI (`/browserassist`):** Need a dedicated writing partner? Type `/browserassist` (or `@browserassist`) anywhere you can type to summon a beautiful, glassmorphic UI overlay. The assistant analyzes your current page's context and any uploaded PDFs to craft highly specific responses.
 
----
+## 🔒 Security & Privacy First
 
-## 🛠️ Technology Stack & Performance
+We put your privacy at the forefront:
 
-- **Frontend:** React 18, TypeScript, Vite, TailwindCSS
-- **Extension Core:** CRXJS (Hot Reloading), Shadow DOM (Style Isolation)
-- **Performance Engine:**
-  - **Streaming:** custom `ReadableStream` implementation for Token-by-Token rendering.
-  - **Context Extraction:** `@mozilla/readability` (lightweight DOM parsing).
-  - **Inference:** `window.ai` (Chrome), `@mlc-ai/web-llm` (WebGPU).
+- **No Cloud Processing:** All data parsing and LLM generation happens strictly on your machine.
+- **Zero CORS Configuration:** Automatically handles restrictive network policies using highly privileged Chrome `declarativeNetRequest` rules. The extension talks to your local Ollama instance seamlessly. No need to mess with terminal commands or `OLLAMA_ORIGINS`.
+- **Anti-XSS Defense:** Engineered with robust string sanitization avoiding outdated `innerHTML` injection to ensure your browser remains secure against DOM-based cross-site scripting attacks.
+- **Private Scraping:** Respects the boundaries of your active tab. Your data never leaves your computer.
 
----
+## 🚀 Installation & Setup
 
-## 🏗️ Architecture: The "Instant" Pipeline
+### Running from Source (Developer Mode)
 
-To achieve near-instant inference, we bypass standard API waiting times.
+1. Clone or download this repository.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Build the extension for production:
+   ```bash
+   npm run build
+   ```
+4. Load into Chrome:
+   - Go to `chrome://extensions/`
+   - Enable **Developer mode** in the top right corner.
+   - Click **Load unpacked** and select the `/dist` folder inside this project directory.
 
-### 1. The Context Engine (`src/services/context/`)
+### Choosing your AI Engine
 
-Before the user even finishes typing the prompt, the extension captures the page state.
+Open the extension popup to select your preferred AI workhorse:
 
-- **Gmail:** Targets specific DOM nodes (`.a3s.aiL`) to get the exact email thread history.
-- **General Web:** Uses a lightweight Readability parser to strip ads/nav bars and get the pure text content of the article/page.
-- **Optimization:** Context is token-limited (sliding window) to ensure the LLM doesn't choke on processing time.
+- **WebLLM (Phi-3 - Offline In-Browser GPU):** Best for absolute privacy. The model downloads directly into your browser's VRAM the first time you use it. Subsequent uses are instantaneous and completely offline.
+- **Ollama (Local Desktop App):** Best for performance and using the newest models.
+  1. Download and install [Ollama](https://ollama.com/) for your OS.
+  2. Start the Ollama application. (No special terminal commands are required—just run the app normally).
+  3. Type `/browserassist` in the browser, and the extension will automatically connect to your running Ollama server.
 
-### 2. The Streaming Bridge
+## 🛠️ Usage
 
-We do not wait for the full response.
+### 1. The Assistant Overlay
 
-- **Ollama/WebLLM:** We attach a listener to the output stream.
-- **Shadow DOM:** The React UI updates typically at 60fps, rendering tokens the moment they are predicted.
+In any text box (Gmail, Upwork, forums), type:
+`/browserassist`
+This will instantly summon the Aegis Core UI overlay. You can chat with it, ask it to draft responses based on the page's current state, or upload PDF files for it to analyze securely.
 
----
+### 2. Inline Autocomplete
 
-## ⚙️ Installation & Setup
+Start drafting a sentence and pause for a second. The extension will read your context and generate a helpful "ghost suggestion." If you like it, press **Tab** to accept the suggestion.
 
-### 1. Prerequisites
+## 🏗️ Technical Stack
 
-- **Node.js** (v18+)
-- **GPU Recommended** (for WebLLM)
-- **Chrome Canary/Dev** (Required for "Chrome Built-in AI" mode)
-
-### 2. Quick Start
-
-**Bash**
-
-```
-# Clone the repository
-git clone https://github.com/yourusername/browser-assist.git
-cd browser-assist
-
-# Install dependencies
-npm install
-
-# Run the high-performance dev server
-npm run dev
-```
-
-### 3. Load into Chrome
-
-1. Navigate to `chrome://extensions`.
-2. Enable **Developer Mode** .
-3. Click **Load Unpacked** -> Select the `dist` folder.
-
----
-
-## 🧠 Optimizing for Speed (The "Instant" Config)
-
-For the absolute fastest response times, follow this configuration guide:
-
-### Option A: Chrome Built-in AI (Gemini Nano) - _Fastest_
-
-- **Why:** Uses the device's NPU (Neural Processing Unit) if available. No download lag, no VRAM overhead.
-- **Setup:**
-  1. Open Chrome Flags (`chrome://flags`).
-  2. Set `Enables optimization guide on device` to **Enabled BypassPerfRequirement** .
-  3. Set `Prompt API for Gemini Nano` to **Enabled** .
-  4. Restart Chrome.
-
-### Option B: WebLLM (Phi-3 Mini) - _Balanced_
-
-- **Why:** Microsoft's Phi-3 is tiny (3.8B) but incredibly smart. It loads into WebGPU VRAM quickly.
-- **Setup:** Select **"Phi-3-mini-4k-instruct-q4f16_1"** from the extension dropdown. The first run will take 30s to cache; subsequent runs are instant.
-
-### Option C: Local Ollama - _Most Powerful & Flexible_
-
-- **Why:** Connects to your local Ollama desktop app. The extension automatically fetches your entire library of installed models and lets you hot-swap them right from the popup dropdown. Any model, zero restrictions.
-- **Setup:**
-  **Bash**
-
-  ```
-  # Allow Chrome to talk to Ollama
-  $env:OLLAMA_ORIGINS="*"; ollama serve
-
-
-  ```
-
----
-
-## 📂 Implementation Details
-
-### Context Extraction Logic (`src/services/pageScraper.ts`)
-
-This is how we instantly grab "what you are looking at":
-
-**TypeScript**
-
-```
-import { Readability } from '@mozilla/readability';
-
-export const getPageContext = (): string => {
-  // 1. Check if Gmail (special handling for thread history)
-  if (window.location.hostname.includes('google.com')) {
-    const emailBody = document.querySelector('.a3s.aiL');
-    if (emailBody) return "Email Thread Context: " + emailBody.innerText;
-  }
-
-  // 2. Generic Page: Use Readability to extract main article text
-  // We clone the document to avoid messing with the live DOM
-  const documentClone = document.cloneNode(true);
-  const article = new Readability(documentClone as Document).parse();
-
-  return article ? article.textContent : document.body.innerText.substring(0, 3000);
-};
-```
-
-### Zero-Latency Stream Handler (`src/hooks/useLLM.ts`)
-
-This React hook manages the instant updates.
-
-**TypeScript**
-
-```
-const generateText = async (prompt: string, context: string) => {
-  const combinedPrompt = `
-    Task: ${prompt}
-    Background Context: ${context}
-    ---
-    Start writing immediately. Do not chatter.
-  `;
-
-  // Provide a callback that updates UI state on every token
-  await activeService.generate(combinedPrompt, (chunk) => {
-    setOutput((prev) => prev + chunk); // React re-renders immediately
-  });
-};
-```
-
----
-
-## 📜 License
-
-MIT
+- **Framework:** React + TypeScript + CRXJS (Vite)
+- **Styling:** Tailwind CSS (with Glassmorphism aesthetic)
+- **AI Libraries:** `@mlc-ai/web-llm` for browser ML inference, Native Fetch for Ollama API.
+- **Context Engines:** Mozilla Readability for web parsing, PDF.js for secure offline document analysis.

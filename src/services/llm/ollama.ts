@@ -1,15 +1,16 @@
 import { LLMProvider } from './types';
 
 export class OllamaProvider implements LLMProvider {
-  private async getModelInfo(): Promise<{ model: string, endpoint: string }> {
+  private async getModelInfo(): Promise<{ model: string, endpoint: string, contextLength: number }> {
     if (typeof chrome !== 'undefined' && chrome.storage) {
-      const res = await chrome.storage.local.get(['ollama_model', 'ollama_endpoint']);
+      const res = await chrome.storage.local.get(['ollama_model', 'ollama_endpoint', 'ollama_context_length']);
       return {
         model: res.ollama_model || 'llama3.2:3b',
-        endpoint: res.ollama_endpoint || 'http://localhost:11434'
+        endpoint: res.ollama_endpoint || 'http://localhost:11434',
+        contextLength: res.ollama_context_length || 4096
       };
     }
-    return { model: 'llama3.2:3b', endpoint: 'http://localhost:11434' };
+    return { model: 'llama3.2:3b', endpoint: 'http://localhost:11434', contextLength: 4096 };
   }
 
   async generateStream(prompt: string, context: string, onChunk: (chunk: string) => void, _onProgress?: (progress: number, text: string) => void): Promise<string> {
@@ -24,7 +25,7 @@ ${prompt}
     // Send a message to the background script to start the stream.
     // The background script will use a port to send back chunks.
     return new Promise(async (resolve, reject) => {
-      const { model, endpoint } = await this.getModelInfo();
+      const { model, endpoint, contextLength } = await this.getModelInfo();
       
       let port: chrome.runtime.Port;
       try {
@@ -40,6 +41,7 @@ ${prompt}
         action: 'generateStream',
         model,
         endpoint,
+        contextLength,
         prompt: combinedPrompt
       });
 
@@ -77,12 +79,13 @@ ${prefix}
 
     return new Promise(async (resolve, reject) => {
       try {
-        const { model, endpoint } = await this.getModelInfo();
+        const { model, endpoint, contextLength } = await this.getModelInfo();
         chrome.runtime.sendMessage(
           {
             action: 'generateCompletion',
             model,
             endpoint,
+            contextLength,
             prompt: combinedPrompt
           },
           (response) => {

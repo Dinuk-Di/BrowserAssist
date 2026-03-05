@@ -92,7 +92,7 @@ export const AssistantApp: React.FC<AssistantAppProps> = ({ onAccept, onCancel }
       <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-4 flex items-center justify-between text-white drop-shadow-sm">
         <div className="flex items-center gap-3 font-bold text-lg tracking-wide">
           <div className="p-1.5 bg-white/20 rounded-xl backdrop-blur-md shadow-inner flex items-center justify-center">
-            <img src={logoUrl} alt="Logo" className="w-6 h-6 object-contain drop-shadow" />
+            <img src={chrome.runtime?.getURL ? chrome.runtime.getURL(logoUrl) : logoUrl} alt="Logo" className="w-6 h-6 object-contain drop-shadow" />
           </div>
           <span>BrowserAssist AI</span>
         </div>
