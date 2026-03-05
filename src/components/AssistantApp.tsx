@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLLM } from '../hooks/useLLM';
+import { getPageContext } from '../services/pageScraper';
 import { Bot, Loader2, Send, FileText, UploadCloud, ChevronDown, ChevronUp } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import logoUrl from '../assets/logo.png';
@@ -19,6 +20,11 @@ export const AssistantApp: React.FC<AssistantAppProps> = ({ onAccept, onCancel }
   const [isHovering, setIsHovering] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [showContext, setShowContext] = useState(false);
+  const [pageContext, setPageContext] = useState('');
+  
+  useEffect(() => {
+    setPageContext(getPageContext());
+  }, []);
   
   const { generate, output, isGenerating, error, downloadProgress, activeProviderName } = useLLM();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -134,16 +140,28 @@ export const AssistantApp: React.FC<AssistantAppProps> = ({ onAccept, onCancel }
             className="w-full px-5 py-3 flex items-center justify-between text-sm font-semibold text-gray-600 hover:bg-slate-50 transition-colors"
           >
             <div className="flex items-center gap-2">
-              <FileText size={16} className={pdfContext ? 'text-indigo-500' : 'text-gray-400'} />
-              <span>Reference Context {pdfContext && <span className="ml-1 px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs">{(pdfContext.length / 1024).toFixed(1)} KB</span>}</span>
+              <FileText size={16} className={(pdfContext || pageContext) ? 'text-indigo-500' : 'text-gray-400'} />
+              <span>Reference Context {(pdfContext || pageContext) && <span className="ml-1 px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs">{((pdfContext.length + pageContext.length) / 1024).toFixed(1)} KB</span>}</span>
             </div>
             {showContext ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
           
           {showContext && (
             <div className="px-5 pb-4 pt-1 animate-in slide-in-from-top-2 duration-200">
-              <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 text-xs text-slate-600 max-h-32 overflow-y-auto relative whitespace-pre-wrap font-mono leading-relaxed">
-                {pdfContext ? pdfContext : "No PDF attached. Drag a PDF here or click below to upload."}
+              {pageContext && (
+                <div className="mb-3">
+                  <h4 className="text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">🌐 Current Webpage</h4>
+                  <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 text-xs text-slate-600 max-h-32 overflow-y-auto relative whitespace-pre-wrap font-mono leading-relaxed">
+                    {pageContext}
+                  </div>
+                </div>
+              )}
+              
+              <div>
+                <h4 className="text-xs font-bold text-gray-500 uppercase mb-1 flex items-center gap-1">📄 Attached PDF</h4>
+                <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 text-xs text-slate-600 max-h-32 overflow-y-auto relative whitespace-pre-wrap font-mono leading-relaxed">
+                  {pdfContext ? pdfContext : "No PDF attached. Drag a PDF here or click below to upload."}
+                </div>
               </div>
               
               {!pdfContext && (

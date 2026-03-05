@@ -109,7 +109,9 @@ const handleAutocomplete = async (element: HTMLTextAreaElement | HTMLInputElemen
   try {
     const provider = await llmFactory.getProvider();
     const completion = await provider.generateCompletion(text, context);
-    if (!completion) return;
+    
+    // Do not show the chip if it generated nothing, OR if the user opened the Assistant UI while it was generating!
+    if (!completion || document.getElementById('browser-assist-host')) return;
     
     // Create an inline ghost suggestion (simplified concept)
     console.log("[BrowserAssist] Inline suggestion:", completion);
@@ -236,6 +238,8 @@ document.addEventListener('input', (e) => {
     // Inline AutoComplete Trigger
     if (typingTimer) clearTimeout(typingTimer);
     typingTimer = setTimeout(() => {
+      // Final double-check to make sure Assistant didn't open during the 1 second delay
+      if (document.getElementById('browser-assist-host')) return;
       handleAutocomplete(target, text);
     }, AUTOCOMPLETE_DELAY);
   }

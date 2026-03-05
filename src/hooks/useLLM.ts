@@ -7,7 +7,7 @@ export const useLLM = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<{progress: number, text: string} | null>(null);
-  const [activeProviderName, setActiveProviderName] = useState<ProviderType>('webllm');
+  const [activeProviderName, setActiveProviderName] = useState<ProviderType | null>(null);
 
   const preloadEngine = useCallback(async (provider: ProviderType) => {
     try {
@@ -25,23 +25,33 @@ export const useLLM = () => {
   }, []);
 
   useEffect(() => {
-    // Just grab the current active provider on mount so UI knows what to show
+    let isMounted = true;
+    
+    // Grab the current active provider on mount so UI knows what to show
     const getProviderName = async () => {
       let active: ProviderType = 'webllm';
-      if (typeof chrome !== 'undefined' && chrome.storage) {
-         const res = await chrome.storage.local.get(['llm_provider']);
-         if (res.llm_provider && res.llm_provider !== 'chrome') {
-           active = res.llm_provider as ProviderType;
-         }
-      } else {
-        active = llmFactory.getActiveProviderType();
+      try {
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.runtime?.id) {
+           const res = await chrome.storage.local.get(['llm_provider']);
+           if (res.llm_provider && res.llm_provider !== 'chrome') {
+             active = res.llm_provider as ProviderType;
+           }
+        } else {
+          active = llmFactory.getActiveProviderType();
+        }
+      } catch (e: any) {
+        if (e.message?.includes('Extension context invalidated')) {
+          if (isMounted) setError('Extension was updated. Please refresh the webpage to continue.');
+          return;
+        }
       }
+      
+      if (!isMounted) return;
       setActiveProviderName(active);
-      if (active === 'webllm') {
-        preloadEngine('webllm');
-      }
     };
     getProviderName();
+    
+    return () => { isMounted = false; };
   }, [preloadEngine]);
 
   const generate = useCallback(async (prompt: string, extraContext: string = '', provider?: ProviderType) => {
@@ -51,7 +61,15 @@ export const useLLM = () => {
     setDownloadProgress(null);
     
     try {
-      const context = getPageContext() + '\n' + extraContext;
+      const pageCtx = getPageContext();
+      let context = '';
+      if (pageCtx) {
+        context += `[Current Webpage Context:]\n${pageCtx}\n\n`;
+      }
+      if (extraContext) {
+        context += `${extraContext}\n\n`;
+      }
+      
       const llm = await llmFactory.getProvider(provider);
       
       // Update UI with the resolved provider

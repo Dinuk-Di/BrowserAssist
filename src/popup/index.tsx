@@ -6,7 +6,7 @@ import { useLLM } from '../hooks/useLLM';
 import { ProviderType } from '../services/llm';
 
 const Popup = () => {
-  const [provider, setProvider] = useState<ProviderType>('webllm');
+  const [provider, setProvider] = useState<ProviderType | null>(null);
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>('llama3.2:3b');
   const [ollamaEndpoint, setOllamaEndpoint] = useState<string>('http://localhost:11434');
@@ -14,12 +14,16 @@ const Popup = () => {
 
   useEffect(() => {
     chrome.storage.local.get(['llm_provider', 'ollama_model', 'ollama_endpoint'], (res) => {
+      let currentProvider: ProviderType = 'webllm';
+      
       if (res.llm_provider && res.llm_provider !== 'chrome') {
-        setProvider(res.llm_provider);
-      } else if (res.llm_provider === 'chrome') {
-        setProvider('webllm');
+        currentProvider = res.llm_provider;
+      } else {
         chrome.storage.local.set({ llm_provider: 'webllm' });
       }
+      
+      setProvider(currentProvider);
+      
       if (res.ollama_model) {
         setSelectedOllamaModel(res.ollama_model);
       }
@@ -30,6 +34,8 @@ const Popup = () => {
   }, []);
 
   useEffect(() => {
+    if (!provider) return;
+    
     if (provider === 'ollama') {
       fetch(`${ollamaEndpoint.replace(/\/+$/, '')}/api/tags`)
         .then(res => res.json())
@@ -80,7 +86,7 @@ const Popup = () => {
       <div className="mb-4">
         <label className="block text-sm font-semibold mb-1">AI Provider</label>
         <select 
-          value={provider}
+          value={provider || 'webllm'}
           onChange={handleProviderChange}
           className="w-full border rounded-lg p-2 bg-gray-50 outline-none focus:ring-1 focus:ring-blue-500"
         >
@@ -150,9 +156,8 @@ const Popup = () => {
         {provider === 'ollama' && (
           <ul className="list-disc pl-4 space-y-1 text-xs">
             <li>Requires <a href="https://ollama.com" target="_blank" className="underline font-bold">Ollama</a> installed locally.</li>
-            <li>Open a terminal / command prompt.</li>
-            <li>Run: <code className="bg-white px-1 py-0.5 rounded font-mono break-all font-bold">OLLAMA_ORIGINS="*" ollama serve</code></li>
-            <li>This runs the server and explicitly allows the extension to talk to it without getting blocked by CORS.</li>
+            <li>No terminal configuration needed. Just open your normal desktop Ollama app!</li>
+            <li>Wait for the model to load into VRAM on the first request (can take 30-60s on older machines).</li>
           </ul>
         )}
         {provider === 'webllm' && (
